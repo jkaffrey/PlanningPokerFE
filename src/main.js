@@ -5,7 +5,7 @@ import { io } from 'socket.io-client';
 import Toast, { POSITION } from "vue-toastification";
 import "vue-toastification/dist/index.css";
 
-const socket = io(process.env.backendURL || 'http://localhost:3000'); // Ensure this URL matches your backend server's URL
+const socket = io(import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000'); // Ensure this URL matches your backend server's URL
 const app = createApp(App);
 
 app.provide('socket', socket);
