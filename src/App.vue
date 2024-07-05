@@ -10,7 +10,7 @@
   <div class="container">
     <div class="story">
       <h3 v-if="sessionId && username">{{ adminSubmittedText }}</h3>
-      <div v-if="isAdmin" class="add-story">
+      <div v-if="isAdmin && sessionId && username" class="add-story">
         <input type="text" v-model="adminInput" placeholder="Enter text" />
         <button @click="submitAdminInput" class="btn-primary">Add A Story</button>
       </div>
