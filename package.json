@@ -1,0 +1,27 @@
+{
+  "name": "planningpokerfe",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "vite",
+    "prestart": "npm run build",
+    "build": "npx vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "chart.js": "^4.4.3",
+    "express": "^4.19.2",
+    "serve-static": "^1.15.0",
+    "socket.io-client": "^4.7.5",
+    "vue": "^3.4.29",
+    "vue-chartjs": "^5.3.1",
+    "vue-router": "^4.4.0",
+    "vue-toastification": "^2.0.0-rc.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.5",
+    "vite": "^5.3.1"
+  }
+}
