@@ -151,7 +151,7 @@
                   :key="option"
                   class="vote-item"
                 >
-                  <div>{{ option }} Points</div>
+                  <div class="point-count">{{ option }} Points</div>
                   <div class="vote-count">
                     {{ count }} Player{{ count > 1 ? "s" : "" }}
                   </div>
@@ -236,6 +236,22 @@
         </div>
       </div>
     </div>
+    <button
+      id="scrollToTopBtn"
+      v-bind:class="reveal ? 'scroll-to-top' : 'hidden'"
+      @click="scrollToTop"
+    >
+      <span>Scroll To Top</span>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="14"
+        height="14"
+        fill="none"
+      >
+        <path d="M12 4l-8 8h6v8h4v-8h6l-8-8z" fill="currentColor" />
+      </svg>
+    </button>
   </div>
 </template>
 
@@ -469,6 +485,14 @@ export default {
       }
       sessionId.value = "";
       router.push({ path: "/" });
+    };
+
+    const scrollToTop = () => {
+      window.scroll({
+        top: 0,
+        left: 0,
+        behavior: "smooth",
+      });
     };
 
     onMounted(() => {
@@ -708,6 +732,7 @@ export default {
       showSessionExpiredModal,
       toggleSessionExpiredModal,
       SessionExpiredModal,
+      scrollToTop,
     };
   },
 };
@@ -784,6 +809,39 @@ nav {
   margin-bottom: 24px;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.scroll-to-top {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-size: 16px;
+  z-index: 1000;
+}
+
+.scroll-to-top span {
+  font-size: 14px;
+}
+
+.scroll-to-top:hover {
+  background-color: #646464;
+}
+
+.scroll-to-top svg {
+  margin-left: 8px;
+}
+
+.scroll-to-top:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.5);
 }
 
 .voting-progress {
@@ -972,8 +1030,12 @@ button:hover {
 }
 
 .vote-count {
-  font-size: 24px;
-  color: #ff5722;
+  font-size: 16px;
+  color: #8bbf9f;
+}
+
+.point-count {
+  font-size: 20px;
 }
 
 .card {
@@ -1028,7 +1090,7 @@ button:hover {
 
 .fraction .numerator {
   padding-bottom: 0.3em;
-  border-bottom: 3px solid #fff;
+  border-bottom: 3px solid #000;
 }
 
 .fraction .denominator {
@@ -1278,6 +1340,10 @@ body.dark-mode .vote svg circle {
 
 body.dark-mode .vote svg path {
   stroke: #fff !important;
+}
+
+body.dark-mode .fraction .numerator {
+  border-bottom: 3px solid #fff;
 }
 
 @media screen and (max-width: 480px) {
