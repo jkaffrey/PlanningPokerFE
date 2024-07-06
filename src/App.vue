@@ -4,35 +4,83 @@
       <a href="/">Planning Poker</a>
     </div>
     <div class="nav-right">
-      <button class="btn-primary" @click="createSession">Create A New Session</button>
+      <button class="btn-primary" @click="createSession">
+        Create A New Session
+      </button>
     </div>
   </nav>
   <div class="container">
+    <RenameModal
+      :visible="showRenameModal"
+      :onConfirm="changeUsername"
+      :onCancel="cancelUsernameChange"
+    />
     <div class="story">
       <h3 v-if="sessionId && username">{{ adminSubmittedText }}</h3>
       <div v-if="isAdmin && sessionId && username" class="add-story">
         <input type="text" v-model="adminInput" placeholder="Enter text" />
-        <button @click="submitAdminInput" class="btn-primary">Add A Story</button>
+        <button @click="submitAdminInput" class="btn-primary">
+          Add A Story
+        </button>
       </div>
     </div>
     <div class="welcome-bar" v-if="username && sessionId">
       <h2>Welcome, {{ username }} <span v-if="isAdmin">(Moderator)</span></h2>
+      <div @click="activateRenameModal">
+        <svg
+          class="rename-user"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zm2.92-2.92l1.88 1.88L14.06 9.94l-1.88-1.88-6.26 6.26zM20.71 7.04a1.003 1.003 0 0 0 0-1.42l-2.34-2.34a1.003 1.003 0 0 0-1.42 0l-1.83 1.83 3.75 3.75 1.84-1.82z"
+            fill="currentColor"
+          />
+        </svg>
+      </div>
       <div class="admin-actions" v-if="isAdmin">
-        <button @click="revealVotes" v-bind:class="reveal ? '' : active ? 'btn-primary' : 'hidden'">Reveal Votes</button>
-        <button @click="startTheVoting" v-bind:class="active ? 'hidden' : 'btn-primary'">Start Voting</button>
-        <button @click="restartVoting" v-bind:class="!active ? 'hidden' : reveal ? 'btn-primary' : ''">Restart</button>
+        <button
+          @click="revealVotes"
+          v-bind:class="reveal ? '' : active ? 'btn-primary' : 'hidden'"
+        >
+          Reveal Votes
+        </button>
+        <button
+          @click="startTheVoting"
+          v-bind:class="active ? 'hidden' : 'btn-primary'"
+        >
+          Start Voting
+        </button>
+        <button
+          @click="restartVoting"
+          v-bind:class="!active ? 'hidden' : reveal ? 'btn-primary' : ''"
+        >
+          Restart
+        </button>
       </div>
     </div>
     <div class="voting-progress" v-if="sessionId && username">
-      <div v-bind:class="!reveal && active ? 'vote-status active' : 'vote-status closed'">
+      <div
+        v-bind:class="
+          !reveal && active ? 'vote-status active' : 'vote-status closed'
+        "
+      >
         <span v-if="reveal && active">Voting is closed</span>
         <span v-else-if="!reveal && active">
           <div>Voting is in progress...</div>
-          <div class="users-voted">({{ votes.length }} / {{ users.length }} users have voted.)</div>
+          <div class="users-voted">
+            ({{ votes.length }} / {{ users.length }} users have voted.)
+          </div>
         </span>
         <span v-else class="waiting-to-start">
           <div>Waiting for the moderator to start the session.</div>
-          <div class="users-voted">({{ users.length }} user{{ users.length > 1 ? 's' : '' }} in the session.)</div>
+          <div class="users-voted">
+            ({{ users.length }} user{{ users.length > 1 ? "s" : "" }} in the
+            session.)
+          </div>
         </span>
       </div>
     </div>
@@ -48,20 +96,34 @@
           </div>
           <div class="join-session">
             <h2>Join an Existing Session</h2>
-            <input class="session-id" type="text" v-model="sessionInput" placeholder="Enter session ID" />
+            <input
+              class="session-id"
+              type="text"
+              v-model="sessionInput"
+              placeholder="Enter session ID"
+            />
             <button @click="joinSession" class="btn-primary">Join</button>
           </div>
         </div>
       </div>
       <div v-if="sessionId && !username">
         <h3>Enter your name to join your session</h3>
-        <input type="text" v-model="usernameInput" placeholder="Enter your name" />
+        <input
+          type="text"
+          v-model="usernameInput"
+          placeholder="Enter your name"
+        />
         <button @click="join" class="btn-primary">Join</button>
       </div>
       <div class="main-content" v-if="sessionId && username">
         <div class="voting">
           <div>
-            <button v-bind:class="reveal || !active ? 'disabled-card card' : 'card'" v-for="option in options" :key="option" @click="vote(option)">
+            <button
+              v-bind:class="reveal || !active ? 'disabled-card card' : 'card'"
+              v-for="option in options"
+              :key="option"
+              @click="vote(option)"
+            >
               {{ option }}
             </button>
           </div>
@@ -69,9 +131,15 @@
             <h3>Vote Results</h3>
             <div class="reveal-vote-info" id="reveal-vote-info">
               <div class="vote-breakdown">
-                <div v-for="(count, option) in voteCounts" :key="option" class="vote-item">
+                <div
+                  v-for="(count, option) in voteCounts"
+                  :key="option"
+                  class="vote-item"
+                >
                   <div>{{ option }} Points</div>
-                  <div class="vote-count">{{ count }} Player{{ count > 1 ? 's' : '' }}</div>
+                  <div class="vote-count">
+                    {{ count }} Player{{ count > 1 ? "s" : "" }}
+                  </div>
                 </div>
               </div>
               <div class="chart-breakdown">
@@ -85,31 +153,68 @@
           <ul>
             <li v-for="user in users" :key="user">
               <div>
-                <button class="kick-btn" v-if="user !== username && isAdmin" @click="kickUser(user)">Remove</button>
+                <button
+                  class="kick-btn"
+                  v-if="user !== username && isAdmin"
+                  @click="kickUser(user)"
+                >
+                  Remove
+                </button>
                 {{ user }}
                 <span v-if="hasVoted(user)" class="vote">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
-                    <circle cx="8" cy="8" r="7" stroke="#0E0F19" stroke-width="1" fill="none"/>
-                    <path d="M5 8l2 2l4-4" stroke="#0E0F19" stroke-width="1" fill="none"/>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 16 16"
+                    width="16"
+                    height="16"
+                  >
+                    <circle
+                      cx="8"
+                      cy="8"
+                      r="7"
+                      stroke="#0E0F19"
+                      stroke-width="1"
+                      fill="none"
+                    />
+                    <path
+                      d="M5 8l2 2l4-4"
+                      stroke="#0E0F19"
+                      stroke-width="1"
+                      fill="none"
+                    />
                   </svg>
                 </span>
               </div>
               <div class="votes-and-admin-actions">
-                <span v-if="reveal" class="individual-vote">{{ getUserVote(user) }}</span>
+                <span v-if="reveal" class="individual-vote">{{
+                  getUserVote(user)
+                }}</span>
               </div>
             </li>
             <li @click="expandInvite" class="invite-players">
-              <div v-if="inviteExpanded" class="invite-players-container expanded">
+              <div
+                v-if="inviteExpanded"
+                class="invite-players-container expanded"
+              >
                 <span>
                   <input type="text" :value="currentSessionUrl" readonly />
-                  <button class="btn-primary" @click.stop="copySessionUrl">Copy URL</button>
+                  <button class="btn-primary" @click.stop="copySessionUrl">
+                    Copy URL
+                  </button>
                 </span>
               </div>
               <div v-else class="invite-players-container">
                 <span>Invite players to the session.</span>
               </div>
-              <svg v-bind:class="inviteExpanded ? 'chevron open' : 'chevron'" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 9L18 15H6L12 9Z" fill="currentColor"/>
+              <svg
+                v-bind:class="inviteExpanded ? 'chevron open' : 'chevron'"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path d="M12 9L18 15H6L12 9Z" fill="currentColor" />
               </svg>
             </li>
           </ul>
@@ -119,38 +224,61 @@
   </div>
 </template>
 
-
 <script>
-import { ref, inject, onMounted, onBeforeUnmount, watch, computed } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { ref, inject, onMounted, onBeforeUnmount, watch, computed } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
-import VotePieChart from './components/VotePieChart.vue';
+import VotePieChart from "./components/VotePieChart.vue";
+import RenameModal from "./components/RenameModal.vue";
 
 export default {
   components: {
-    VotePieChart
+    VotePieChart,
+    RenameModal,
   },
   setup() {
     const toast = useToast();
     const searchParams = new URLSearchParams(window.location.search);
-    const session_id = searchParams ? searchParams.get('sessionId') : null;
+    const session_id = searchParams ? searchParams.get("sessionId") : null;
 
-    const socket = inject('socket');
+    const socket = inject("socket");
     const route = useRoute();
     const router = useRouter();
     const sessionId = ref(session_id || null);
-    const username = ref('');
-    const usernameInput = ref('');
-    const sessionInput = ref('');
+    const username = ref("");
+    const usernameInput = ref("");
+    const sessionInput = ref("");
     const users = ref([]);
     const votes = ref([]);
-    const options = ['0', '1/2', '1', '2', '3', '5', '8', '13', '20'];
+    const options = ["0", "1/2", "1", "2", "3", "5", "8", "13", "20"];
     const isAdmin = ref(false);
     const reveal = ref(false);
     const active = ref(false);
-    const adminInput = ref('');
-    const adminSubmittedText = ref('');
+    const adminInput = ref("");
+    const adminSubmittedText = ref("");
     const inviteExpanded = ref(false);
+    const showRenameModal = ref(false);
+
+    const activateRenameModal = () => {
+      showRenameModal.value = true;
+    };
+
+    const changeUsername = (newUsername) => {
+      let oldUsername = username.value;
+      showRenameModal.value = false;
+      username.value = newUsername;
+      localStorage.setItem("username", newUsername);
+      toast.success("Your username has been changed.");
+      socket.emit("username-changed", {
+        sessionId: sessionId.value,
+        username: newUsername,
+        oldUsername,
+      });
+    };
+
+    const cancelUsernameChange = () => {
+      showRenameModal.value = false;
+    };
 
     const voteCounts = computed(() => {
       return votes.value.reduce((acc, vote) => {
@@ -165,69 +293,79 @@ export default {
         if (vote.username === user) {
           hasVoted = true;
         }
-      })
+      });
 
       return hasVoted;
-    }
+    };
 
     const getUserVote = (user) => {
-      let voteValue = '-';
+      let voteValue = "-";
       votes.value.filter((vote) => {
         if (vote.username === user) {
-          voteValue = vote.vote
+          voteValue = vote.vote;
         }
-      })
+      });
 
       return voteValue;
-    }
+    };
 
     const createSession = () => {
-      socket.emit('create-session', { adminUsername: username.value });
+      socket.emit("create-session", { adminUsername: username.value });
       votes.value = [];
-      adminSubmittedText.value = '';
-      toast.success('A new session has been started, invite your players to begin planning.')
+      adminSubmittedText.value = "";
+      toast.success(
+        "A new session has been started, invite your players to begin planning."
+      );
     };
 
     const joinSession = () => {
-      if (sessionInput.value.trim() !== '') {
-        router.push({ path: '/', query: { sessionId: sessionInput.value.trim() } });
+      if (sessionInput.value.trim() !== "") {
+        router.push({
+          path: "/",
+          query: { sessionId: sessionInput.value.trim() },
+        });
         sessionId.value = sessionInput.value.trim();
       }
     };
 
     const join = () => {
-      if (usernameInput.value.trim() !== '') {
+      if (usernameInput.value.trim() !== "") {
         username.value = usernameInput.value.trim();
-        localStorage.setItem('username', username.value);
-        socket.emit('join-session', { sessionId: sessionId.value, username: username.value });
+        localStorage.setItem("username", username.value);
+        socket.emit("join-session", {
+          sessionId: sessionId.value,
+          username: username.value,
+        });
+      } else {
+        toast.warning("Please enter a valid name.");
       }
     };
 
     const vote = (option) => {
       if (reveal.value || !active.value) {
-        toast.warning('Voting is currently closed.')
+        toast.warning("Voting is currently closed.");
         return;
       }
-      socket.emit('vote', option);
-      toast.success("Your vote has been submitted.")
+      socket.emit("vote", option);
+      toast.success("Your vote has been submitted.");
     };
 
     const revealVotes = () => {
-      socket.emit('reveal-votes', sessionId.value);
+      socket.emit("reveal-votes", sessionId.value);
       active.value = true;
     };
 
     const startTheVoting = () => {
-      socket.emit('start-the-voting', sessionId.value);
-    }
+      socket.emit("start-the-voting", sessionId.value);
+    };
 
     const restartVoting = () => {
-      socket.emit('restart-voting', sessionId.value);
+      socket.emit("restart-voting", sessionId.value);
       active.value = false;
     };
 
     const kickUser = (user) => {
-      socket.emit('kick-user', { sessionId: sessionId.value, username: user });
+      socket.emit("kick-user", { sessionId: sessionId.value, username: user });
       toast.success("User " + user + " has been kicked from this session.");
     };
 
@@ -236,14 +374,19 @@ export default {
         toast.warning("Looks like you forgot to type in a story.");
         return;
       }
-      socket.emit('admin-input', { sessionId: sessionId.value, text: adminInput.value });
+      socket.emit("admin-input", {
+        sessionId: sessionId.value,
+        text: adminInput.value,
+      });
       restartVoting();
-      adminInput.value = '';
+      adminInput.value = "";
     };
 
     const copySessionUrl = () => {
       navigator.clipboard.writeText(currentSessionUrl.value);
-      toast.success("Session URL has been copied to your clipboard. Share it with your players!");
+      toast.success(
+        "Session URL has been copied to your clipboard. Share it with your players!"
+      );
     };
 
     const currentSessionUrl = computed(() => {
@@ -251,84 +394,113 @@ export default {
     });
 
     const expandInvite = () => {
-      inviteExpanded.value = !inviteExpanded.value
-    }
+      inviteExpanded.value = !inviteExpanded.value;
+    };
 
     function waitForElm(selector) {
-    return new Promise(resolve => {
+      return new Promise((resolve) => {
         if (document.querySelector(selector)) {
-            return resolve(document.querySelector(selector));
+          return resolve(document.querySelector(selector));
         }
 
-        const observer = new MutationObserver(mutations => {
-            if (document.querySelector(selector)) {
-                observer.disconnect();
-                resolve(document.querySelector(selector));
-            }
+        const observer = new MutationObserver((mutations) => {
+          if (document.querySelector(selector)) {
+            observer.disconnect();
+            resolve(document.querySelector(selector));
+          }
         });
 
-        // If you get "parameter 1 is not of type 'Node'" error, see https://stackoverflow.com/a/77855838/492336
         observer.observe(document.body, {
-            childList: true,
-            subtree: true
+          childList: true,
+          subtree: true,
         });
-    });
-}
+      });
+    }
 
     onMounted(() => {
-      const storedUsername = localStorage.getItem('username');
+      const storedUsername = localStorage.getItem("username");
       if (storedUsername) {
         username.value = storedUsername;
       }
 
       if (sessionId.value && username.value) {
-        socket.emit('join-session', { sessionId: sessionId.value, username: username.value });
+        socket.emit("join-session", {
+          sessionId: sessionId.value,
+          username: username.value,
+        });
       }
 
-      socket.on('error', (msg) => {
-        sessionId.value = '';
-        router.push({ path: '/' });
-        toast.error("Your session has either ended or something has gone wrong.")
+      socket.on("error", (msg) => {
+        sessionId.value = "";
+        router.push({ path: "/" });
+        toast.error(
+          "Your session has either ended or something has gone wrong."
+        );
       });
 
-      socket.on('session-created', (id) => {
-        router.push({ path: '/', query: { sessionId: id } });
+      socket.on("session-created", (id) => {
+        router.push({ path: "/", query: { sessionId: id } });
         sessionId.value = id;
         isAdmin.value = true;
       });
 
-      socket.on('user-joined', ({ username: usernameSession, users: userList, adminUsername, ticketText, revealVotes, sessionVotes, votingActive }) => {
-        users.value = userList;
-        if (username.value === adminUsername) {
-          isAdmin.value = true;
-        }
-        if (ticketText) {
-          adminSubmittedText.value = ticketText;
-        }
+      socket.on(
+        "user-joined",
+        ({
+          username: usernameSession,
+          oldUsername,
+          users: userList,
+          adminUsername,
+          ticketText,
+          revealVotes,
+          sessionVotes,
+          votingActive,
+        }) => {
+          users.value = userList;
+          if (username.value === adminUsername) {
+            isAdmin.value = true;
+          }
+          if (ticketText) {
+            adminSubmittedText.value = ticketText;
+          }
 
-        reveal.value = revealVotes;
-        active.value = votingActive;
+          reveal.value = revealVotes;
+          active.value = votingActive;
 
-        if (sessionVotes) {
-          for (const [key, value] of Object.entries(sessionVotes)) {
-            const existingVoteIndex = votes.value.findIndex(vote => vote.username === key);
-            if (existingVoteIndex === -1) {
-              votes.value.push({
-                username: key,
-                vote: value
-              });
+          if (oldUsername) {
+            const existingVoteIndex = votes.value.findIndex(
+              (vote) => vote.username === oldUsername
+            );
+            delete votes.value.splice(existingVoteIndex, 1);
+          }
+
+          if (sessionVotes) {
+            for (const [key, value] of Object.entries(sessionVotes)) {
+              const existingVoteIndex = votes.value.findIndex(
+                (vote) => vote.username === key
+              );
+              if (existingVoteIndex === -1) {
+                votes.value.push({
+                  username: key,
+                  vote: value,
+                });
+              }
             }
           }
         }
+      );
+
+      socket.on("user-left", ({ username, users: userList }) => {
+        if (username) {
+          users.value = userList;
+          toast.warning(`${username} left`);
+        }
       });
 
-      socket.on('user-left', ({ username, users: userList }) => {
-        users.value = userList;
-        toast.warning(`${username} left`);
-      });
-
-      socket.on('vote', (vote) => {
-        const existingVoteIndex = votes.value.findIndex(v => v.username === vote.username);
+      socket.on("vote", (vote) => {
+        const existingVoteIndex = votes.value.findIndex(
+          (v) => v.username === vote.username
+        );
         if (existingVoteIndex !== -1) {
           votes.value[existingVoteIndex].vote = vote.vote;
         } else {
@@ -336,37 +508,42 @@ export default {
         }
       });
 
-      socket.on('voting-reset', () => {
+      socket.on("voting-reset", () => {
         reveal.value = false;
         active.value = false;
         votes.value = [];
       });
 
-      socket.on('votes-revealed', () => {
+      socket.on("votes-revealed", () => {
         reveal.value = true;
         // let results = document.getElementById('reveal-vote-info');
-        waitForElm('#reveal-vote-info').then((elm) => {
+        waitForElm("#reveal-vote-info").then((elm) => {
           elm.scrollIntoView({ behavior: "smooth" });
-        })
+        });
       });
 
-      socket.on('voting-active', () => {
+      socket.on("voting-active", () => {
         active.value = true;
-      })
-
-      socket.on('user-kicked', ({ username: usernameSession, users: userList }) => {
-        users.value = userList;
-        votes.value = votes.value.filter(vote => vote.username !== usernameSession);
-        if (usernameSession === username.value) {
-          sessionId.value = '';
-          router.push({ path: '/' });
-          toast.error('You have been kicked from the session.');
-        }
       });
 
-      socket.on('admin-input', ({ text }) => {
+      socket.on(
+        "user-kicked",
+        ({ username: usernameSession, users: userList }) => {
+          users.value = userList;
+          votes.value = votes.value.filter(
+            (vote) => vote.username !== usernameSession
+          );
+          if (usernameSession === username.value) {
+            sessionId.value = "";
+            router.push({ path: "/" });
+            toast.error("You have been kicked from the session.");
+          }
+        }
+      );
+
+      socket.on("admin-input", ({ text }) => {
         adminSubmittedText.value = text;
-        toast.success('The story has been updated.');
+        toast.success("The story has been updated.");
       });
     });
 
@@ -375,19 +552,24 @@ export default {
       if (newSessionId) {
         sessionId.value = newSessionId;
         if (username.value) {
-          socket.emit('join-session', { sessionId: newSessionId, username: username.value });
+          socket.emit("join-session", {
+            sessionId: newSessionId,
+            username: username.value,
+          });
         }
       }
     });
 
     onBeforeUnmount(() => {
-      socket.off('session-created');
-      socket.off('user-joined');
-      socket.off('user-left');
-      socket.off('vote');
-      socket.off('votes-revealed');
-      socket.off('user-kicked');
-      socket.off('admin-input');
+      socket.off("error");
+      socket.off("session-created");
+      socket.off("user-joined");
+      socket.off("user-left");
+      socket.off("vote");
+      socket.off("voting-reset");
+      socket.off("votes-revealed");
+      socket.off("user-kicked");
+      socket.off("admin-input");
     });
 
     return {
@@ -420,30 +602,27 @@ export default {
       inviteExpanded,
       startTheVoting,
       VotePieChart,
-      waitForElm
+      waitForElm,
+      RenameModal,
+      showRenameModal,
+      activateRenameModal,
+      changeUsername,
+      cancelUsernameChange,
     };
-  }
+  },
 };
 </script>
 
 <style>
 body {
-  font-family: 'Arial', sans-serif;
-  background: linear-gradient(135deg, #F5F5F5 0%, #EDE6FF 100%);
+  font-family: "Arial", sans-serif;
+  background: linear-gradient(135deg, #f5f5f5 0%, #ede6ff 100%);
   display: flex;
   justify-content: center;
   align-items: center;
-  /* height: 100vh; */
   margin: auto;
   margin: 0;
 }
-
-/* #app {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-} */
 
 nav {
   display: flex;
@@ -452,8 +631,8 @@ nav {
   left: 0;
   width: 100%;
   height: 48px;
-  background-color: #8BBF9F;
-  color: #F5F5F5;
+  background-color: #8bbf9f;
+  color: #f5f5f5;
   display: flex;
   justify-content: space-between;
   padding: 10px 20px;
@@ -467,7 +646,7 @@ nav {
 }
 
 .nav-left a {
-  color: #F5F5F5;
+  color: #f5f5f5;
   text-decoration: none;
   font-size: 24px;
   font-weight: bold;
@@ -478,7 +657,7 @@ nav {
 }
 
 .nav-right button {
-  background-color: #3B5249;
+  background-color: #3b5249;
   color: #fff;
   border: none;
   padding: 8px 16px;
@@ -488,13 +667,13 @@ nav {
 }
 
 .nav-right button:hover {
-  background-color: #FF5722;
+  background-color: #ff5722;
 }
 
 .container {
   width: 90vw;
   max-width: 1200px;
-  background-color: #FFF;
+  background-color: #fff;
   padding: 40px 20px 40px 20px;
   margin-top: 96px;
   margin-bottom: 24px;
@@ -509,14 +688,16 @@ nav {
 }
 
 .waiting {
-  background-color: #FF3D00;
+  background-color: #ff3d00;
 }
 
 .story {
   text-align: center;
 }
 
-h1, h2, h3 {
+h1,
+h2,
+h3 {
   color: #333333;
 }
 
@@ -529,7 +710,7 @@ h1, h2, h3 {
 
 input[type="text"] {
   padding: 12px;
-  border: 2px solid #8BBF9F;
+  border: 2px solid #8bbf9f;
   border-radius: 8px;
   width: 100%;
   max-width: 400px;
@@ -538,7 +719,7 @@ input[type="text"] {
 
 input[type="text"]:focus {
   outline: none;
-  border-color: #3B5249;
+  border-color: #3b5249;
 }
 
 input[type="text"]::placeholder {
@@ -548,8 +729,8 @@ input[type="text"]::placeholder {
 button {
   padding: 12px 20px;
   margin: 5px;
-  background-color: #857E7B;
-  color: #FFF;
+  background-color: #857e7b;
+  color: #fff;
   border: none;
   border-radius: 8px;
   cursor: pointer;
@@ -561,13 +742,12 @@ button:hover {
 }
 
 .btn-primary {
-  background-color: #8BBF9F;
+  background-color: #8bbf9f;
 }
 
 .btn-primary:hover {
-  background-color: #6BA98F;
+  background-color: #6ba98f;
 }
-
 
 .welcome-bar {
   display: flex;
@@ -575,6 +755,11 @@ button:hover {
   justify-content: center;
   gap: 20px;
   margin-top: 20px;
+}
+
+.rename-user:hover {
+  cursor: pointer;
+  color: #3b5249;
 }
 
 .admin-actions {
@@ -602,19 +787,21 @@ button:hover {
   width: 100%;
 }
 
-.create-session, .join-session {
+.create-session,
+.join-session {
   width: 90%;
   max-width: 400px;
   padding: 20px;
-  border: 2px solid #8BBF9F;
+  border: 2px solid #8bbf9f;
   border-radius: 12px;
   text-align: center;
-  background: linear-gradient(135deg, #EDE6FF 0%, #F5F5F5 100%);
+  background: linear-gradient(135deg, #ede6ff 0%, #f5f5f5 100%);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s, box-shadow 0.3s;
 }
 
-.create-session:hover, .join-session:hover {
+.create-session:hover,
+.join-session:hover {
   /* transform: translateY(-10px); */
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
@@ -630,23 +817,24 @@ button:hover {
   margin: 20px 0;
 }
 
-.separator::before, .separator::after {
-  content: '';
+.separator::before,
+.separator::after {
+  content: "";
   flex: 1;
-  border-bottom: 1px solid #8BBF9F;
+  border-bottom: 1px solid #8bbf9f;
 }
 
 .separator::before {
-  margin-right: .25em;
+  margin-right: 0.25em;
 }
 
 .separator::after {
-  margin-left: .25em;
+  margin-left: 0.25em;
 }
 
 .separator span {
   padding: 0 10px;
-  background-color: #FFF;
+  background-color: #fff;
   color: #333333;
 }
 
@@ -672,7 +860,7 @@ button:hover {
 }
 
 .vote-item {
-  background-color: #F5F5F5;
+  background-color: #f5f5f5;
   border: 2px solid #333333;
   border-radius: 12px;
   padding: 10px;
@@ -686,7 +874,7 @@ button:hover {
 
 .vote-count {
   font-size: 24px;
-  color: #FF5722;
+  color: #ff5722;
 }
 
 .card {
@@ -696,7 +884,7 @@ button:hover {
   border-radius: 12px;
   width: 120px;
   height: 180px;
-  background-color: #F5F5F5;
+  background-color: #f5f5f5;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   text-align: center;
   font-size: 24px;
@@ -730,13 +918,13 @@ button:hover {
   padding: 16px;
   text-align: center;
   font-weight: bold;
-  color: #FFF;
+  color: #fff;
   border-radius: 8px;
   transition: background-color 0.3s ease;
 }
 
 .vote-status.active {
-  background-color: #8BBF9F;
+  background-color: #8bbf9f;
 }
 
 .vote-status.closed {
@@ -747,8 +935,8 @@ button:hover {
   font-weight: 700;
   margin: 0;
   padding: 12px;
-  background-color: #8BBF9F;
-  color: #FFF;
+  background-color: #8bbf9f;
+  color: #fff;
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
   text-align: center;
@@ -789,7 +977,7 @@ ul {
 }
 
 .kick-btn {
-  color: #FF5722;
+  color: #ff5722;
   background-color: transparent;
   border: none;
   cursor: pointer;
@@ -798,7 +986,7 @@ ul {
 }
 
 .kick-btn:hover {
-  color: #FF3D00;
+  color: #ff3d00;
   background-color: transparent;
 }
 
@@ -844,7 +1032,8 @@ ul {
     padding: 10px;
   }
 
-  .create-session, .join-session {
+  .create-session,
+  .join-session {
     width: 100%;
   }
 
