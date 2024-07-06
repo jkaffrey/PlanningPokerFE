@@ -7,6 +7,17 @@
       <button class="btn-primary" @click="createSession">
         Create A New Session
       </button>
+      <span class="dark-mode-toggle">
+        <input
+          class="toggle"
+          type="checkbox"
+          id="dark-mode-toggle"
+          @change="toggleDarkMode"
+          :checked="isDarkMode"
+        />
+        <label for="dark-mode-toggle" class="toggle-label"></label>
+        <span class="dark-mode-text">Dark Mode</span>
+      </span>
     </div>
   </nav>
   <div class="container">
@@ -14,6 +25,10 @@
       :visible="showRenameModal"
       :onConfirm="changeUsername"
       :onCancel="cancelUsernameChange"
+    />
+    <SessionExpiredModal
+      :visible="showSessionExpiredModal"
+      :onConfirm="toggleSessionExpiredModal"
     />
     <div class="story">
       <h3 v-if="sessionId && username">{{ adminSubmittedText }}</h3>
@@ -92,7 +107,7 @@
             <button @click="createSession" class="btn-primary">Create</button>
           </div>
           <div class="separator">
-            <span>Or</span>
+            <span>OR</span>
           </div>
           <div class="join-session">
             <h2>Join an Existing Session</h2>
@@ -124,7 +139,7 @@
               :key="option"
               @click="vote(option)"
             >
-              {{ option }}
+              <span v-html="renderFraction(option)"></span>
             </button>
           </div>
           <div v-if="reveal">
@@ -230,11 +245,13 @@ import { useRoute, useRouter } from "vue-router";
 import { useToast } from "vue-toastification";
 import VotePieChart from "./components/VotePieChart.vue";
 import RenameModal from "./components/RenameModal.vue";
+import SessionExpiredModal from "./components/SessionExpiredModal.vue";
 
 export default {
   components: {
     VotePieChart,
     RenameModal,
+    SessionExpiredModal,
   },
   setup() {
     const toast = useToast();
@@ -258,6 +275,34 @@ export default {
     const adminSubmittedText = ref("");
     const inviteExpanded = ref(false);
     const showRenameModal = ref(false);
+    const showSessionExpiredModal = ref(false);
+    const isDarkMode = ref(false);
+    const lastHealthCheck = ref(true);
+
+    const isFraction = (value) => {
+      return /\d+\/\d+/.test(value);
+    };
+
+    const renderFraction = (value) => {
+      if (!isFraction(value)) return `<span>${value}</span>`;
+      const [numerator, denominator] = value.split("/");
+      return `<span class="fraction"><span class="numerator">${numerator}</span><span class="denominator">${denominator}</span></span>`;
+    };
+
+    const toggleSessionExpiredModal = (show) => {
+      showSessionExpiredModal.value = show;
+    };
+
+    const toggleDarkMode = (event) => {
+      isDarkMode.value = event.target.checked;
+      if (isDarkMode.value) {
+        document.body.classList.add("dark-mode");
+      } else {
+        document.body.classList.remove("dark-mode");
+      }
+
+      localStorage.setItem("darkMode", isDarkMode.value);
+    };
 
     const activateRenameModal = () => {
       showRenameModal.value = true;
@@ -310,6 +355,7 @@ export default {
     };
 
     const createSession = () => {
+      lastHealthCheck.value = true;
       socket.emit("create-session", { adminUsername: username.value });
       votes.value = [];
       adminSubmittedText.value = "";
@@ -417,7 +463,52 @@ export default {
       });
     }
 
+    const handleErrors = (err, from) => {
+      if (from === "disconnected" && sessionId?.value?.length) {
+        showSessionExpiredModal.value = true;
+      }
+      sessionId.value = "";
+      router.push({ path: "/" });
+    };
+
     onMounted(() => {
+      // Darkmode Logic
+      isDarkMode.value = JSON.parse(localStorage.getItem("darkMode")) === true;
+      if (isDarkMode.value) {
+        document.body.classList.add("dark-mode");
+      }
+
+      // Check session is still active
+      // setInterval(() => {
+      //   if (
+      //     sessionId.value &&
+      //     sessionId.value.length &&
+      //     lastHealthCheck.value
+      //   ) {
+      //     try {
+      //       socket.emit("health-check", { sessionId: sessionId.value });
+      //     } catch (err) {
+      //       console.log("Failed to complete health check.");
+      //     }
+      //   }
+      // }, 15000);
+
+      socket.on("connect_error", (err) => handleErrors(err, "connect_error"));
+      socket.on("connect_failed", (err) => handleErrors(err, "connect_failed"));
+      socket.on("disconnect", (err) => handleErrors(err, "disconnected"));
+
+      socket.on("health-callback", ({ sessionHealthy }) => {
+        lastHealthCheck.value = sessionHealthy;
+        if (sessionHealthy) {
+        } else {
+          showSessionExpiredModal.value = true;
+          router.push({ path: "/" });
+          router.go();
+          // sessionId.value = null;
+        }
+      });
+
+      // App Logic
       const storedUsername = localStorage.getItem("username");
       if (storedUsername) {
         username.value = storedUsername;
@@ -433,9 +524,7 @@ export default {
       socket.on("error", (msg) => {
         sessionId.value = "";
         router.push({ path: "/" });
-        toast.error(
-          "Your session has either ended or something has gone wrong."
-        );
+        showSessionExpiredModal.value = true;
       });
 
       socket.on("session-created", (id) => {
@@ -561,6 +650,7 @@ export default {
     });
 
     onBeforeUnmount(() => {
+      socket.off("health-callback");
       socket.off("error");
       socket.off("session-created");
       socket.off("user-joined");
@@ -568,6 +658,7 @@ export default {
       socket.off("vote");
       socket.off("voting-reset");
       socket.off("votes-revealed");
+      socket.off("voting-active");
       socket.off("user-kicked");
       socket.off("admin-input");
     });
@@ -608,6 +699,15 @@ export default {
       activateRenameModal,
       changeUsername,
       cancelUsernameChange,
+      isDarkMode,
+      toggleDarkMode,
+      isFraction,
+      renderFraction,
+      lastHealthCheck,
+      handleErrors,
+      showSessionExpiredModal,
+      toggleSessionExpiredModal,
+      SessionExpiredModal,
     };
   },
 };
@@ -622,6 +722,7 @@ body {
   align-items: center;
   margin: auto;
   margin: 0;
+  min-height: 100vh;
 }
 
 nav {
@@ -653,7 +754,15 @@ nav {
 }
 
 .nav-right {
+  display: flex;
   margin-right: 32px;
+}
+
+.dark-mode-toggle {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  margin-left: 8px;
 }
 
 .nav-right button {
@@ -664,10 +773,6 @@ nav {
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.3s ease;
-}
-
-.nav-right button:hover {
-  background-color: #ff5722;
 }
 
 .container {
@@ -712,7 +817,7 @@ input[type="text"] {
   padding: 12px;
   border: 2px solid #8bbf9f;
   border-radius: 8px;
-  width: 100%;
+  width: -webkit-fill-available;
   max-width: 400px;
   transition: border-color 0.3s ease;
 }
@@ -797,13 +902,6 @@ button:hover {
   text-align: center;
   background: linear-gradient(135deg, #ede6ff 0%, #f5f5f5 100%);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.create-session:hover,
-.join-session:hover {
-  /* transform: translateY(-10px); */
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
 .session-id {
@@ -815,13 +913,15 @@ button:hover {
   align-items: center;
   text-align: center;
   margin: 20px 0;
+  width: 100%;
+  color: #8bbf9f;
 }
 
 .separator::before,
 .separator::after {
   content: "";
   flex: 1;
-  border-bottom: 1px solid #8bbf9f;
+  border-bottom: 2px solid #8bbf9f;
 }
 
 .separator::before {
@@ -834,8 +934,7 @@ button:hover {
 
 .separator span {
   padding: 0 10px;
-  background-color: #fff;
-  color: #333333;
+  font-weight: 700;
 }
 
 .voting {
@@ -912,6 +1011,28 @@ button:hover {
 .card.disabled-card:hover {
   background-color: none;
   transform: none;
+}
+
+.fraction {
+  display: inline-block;
+  vertical-align: middle;
+  text-align: center;
+  font-size: 0.8em; /* Adjust the font size for fractions */
+}
+
+.fraction .numerator,
+.fraction .denominator {
+  display: block;
+  padding: 0 0.2em;
+}
+
+.fraction .numerator {
+  padding-bottom: 0.3em;
+  border-bottom: 3px solid #fff;
+}
+
+.fraction .denominator {
+  margin-top: 0.35em; /* Adjust this value for better alignment */
 }
 
 .vote-status {
@@ -1024,6 +1145,139 @@ ul {
 
 .hidden {
   display: none;
+}
+
+/* Checkmark toggle */
+/* Hide the default checkbox */
+.dark-mode-text {
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+input.toggle {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-label {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 24px;
+  background-color: #ccc;
+  border-radius: 24px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-right: 4px;
+}
+
+.toggle-label:before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  width: 16px;
+  height: 16px;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+
+input.toggle:checked + .toggle-label {
+  background-color: #8bbf9f;
+}
+
+input.toggle:checked + .toggle-label:before {
+  transform: translateX(26px);
+}
+
+/* Add a shadow for better visual effect */
+.toggle-label:before {
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Begin dark mode styling */
+body.dark-mode {
+  background: linear-gradient(135deg, #333333 0%, #111111 100%);
+  color: #f5f5f5;
+}
+
+body.dark-mode nav {
+  background-color: #444444;
+  color: #f5f5f5;
+}
+
+body.dark-mode h1 {
+  color: #fff;
+}
+
+body.dark-mode h2 {
+  color: #fff;
+}
+
+body.dark-mode h3 {
+  color: #fff;
+}
+
+body.dark-mode .create-session {
+  border: 2px solid #555555;
+  background: linear-gradient(135deg, #333333 0%, #444444 100%);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .join-session {
+  border: 2px solid #555555;
+  background: linear-gradient(135deg, #333333 0%, #444444 100%);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .modal-content {
+  background-color: #444444;
+}
+
+body.dark-mode .container {
+  background-color: #222222;
+  color: #f5f5f5;
+}
+
+body.dark-mode input[type="text"] {
+  background-color: #444444;
+  color: #f5f5f5;
+  border-color: #555555;
+}
+
+body.dark-mode .card {
+  background-color: #444444;
+  border-color: #555555;
+  color: #f5f5f5;
+}
+
+body.dark-mode .card:hover {
+  background-color: #6d6d6d;
+}
+
+body.dark-mode .players li {
+  padding: 12px;
+  background-color: #444444;
+  border: 2px solid #6d6d6d;
+  border-left: none;
+  border-right: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+body.dark-mode .invite-players {
+  background-color: #444444 !important;
+}
+
+body.dark-mode .vote svg circle {
+  stroke: #fff !important;
+}
+
+body.dark-mode .vote svg path {
+  stroke: #fff !important;
 }
 
 @media screen and (max-width: 480px) {
