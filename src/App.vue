@@ -21,6 +21,47 @@
     </div>
   </nav>
   <div class="container">
+    <!-- Settings Icon -->
+    <div v-if="isAdmin" class="settings-icon" @click="toggleSettingsPanel">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="16"
+        height="16"
+        fill="currentColor"
+        class="bi bi-gear"
+        viewBox="0 0 16 16"
+      >
+        <path
+          d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"
+        />
+        <path
+          d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"
+        />
+      </svg>
+    </div>
+    <!-- Settings Panel -->
+    <div v-if="isSettingsPanelVisible" class="settings-panel">
+      <span class="close-btn" @click="toggleSettingsPanel">x</span>
+      <h3>Settings</h3>
+      <span class="button-group-label">Sizing Technique</span>
+      <div class="button-group">
+        <button
+          type="button"
+          v-bind:class="sizingTechnique === 'fibonacci' ? 'btn active' : 'btn'"
+          @click="changeSizingTechnique('fibonacci')"
+        >
+          Fibonacci
+        </button>
+        <button
+          type="button"
+          v-bind:class="sizingTechnique === 't-shirt' ? 'btn active' : 'btn'"
+          @click="changeSizingTechnique('t-shirt')"
+        >
+          T-Shirt
+        </button>
+      </div>
+    </div>
+    <!-- Modals -->
     <RenameModal
       :visible="showRenameModal"
       :onConfirm="changeUsername"
@@ -143,7 +184,19 @@
             </button>
           </div>
           <div v-if="reveal">
-            <h3>Vote Results</h3>
+            <h3>
+              Vote Results:
+              <span
+                v-bind:class="
+                  Object.keys(voteCounts).length === 1
+                    ? 'results-common'
+                    : 'results-mixed'
+                "
+                >{{
+                  Object.keys(voteCounts).length === 1 ? "Consensus" : "Mixed"
+                }}</span
+              >
+            </h3>
             <div class="reveal-vote-info" id="reveal-vote-info">
               <div class="vote-breakdown">
                 <div
@@ -273,6 +326,8 @@ export default {
     const toast = useToast();
     const searchParams = new URLSearchParams(window.location.search);
     const session_id = searchParams ? searchParams.get("sessionId") : null;
+    const tShirtSizing = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
+    const fibonacciSizing = ["0", "1/2", "1", "2", "3", "5", "8", "13", "20"];
 
     const socket = inject("socket");
     const route = useRoute();
@@ -283,7 +338,6 @@ export default {
     const sessionInput = ref("");
     const users = ref([]);
     const votes = ref([]);
-    const options = ["0", "1/2", "1", "2", "3", "5", "8", "13", "20"];
     const isAdmin = ref(false);
     const reveal = ref(false);
     const active = ref(false);
@@ -294,6 +348,9 @@ export default {
     const showSessionExpiredModal = ref(false);
     const isDarkMode = ref(false);
     const lastHealthCheck = ref(true);
+    const isSettingsPanelVisible = ref(false);
+    const sizingTechnique = ref("fibonacci");
+    const options = ref([]);
 
     const isFraction = (value) => {
       return /\d+\/\d+/.test(value);
@@ -318,6 +375,10 @@ export default {
       }
 
       localStorage.setItem("darkMode", isDarkMode.value);
+    };
+
+    const toggleSettingsPanel = () => {
+      isSettingsPanelVisible.value = !isSettingsPanelVisible.value;
     };
 
     const activateRenameModal = () => {
@@ -431,6 +492,14 @@ export default {
       toast.success("User " + user + " has been kicked from this session.");
     };
 
+    const changeSizingTechnique = (technique) => {
+      socket.emit("change-sizing-technique", {
+        sessionId: sessionId.value,
+        technique,
+      });
+      sizingTechnique.value = technique;
+    };
+
     const submitAdminInput = () => {
       if (!adminInput.value) {
         toast.warning("Looks like you forgot to type in a story.");
@@ -496,6 +565,10 @@ export default {
     };
 
     onMounted(() => {
+      // adjust sizing
+      options.value =
+        sizingTechnique.value === "fibonacci" ? fibonacciSizing : tShirtSizing;
+
       // Darkmode Logic
       isDarkMode.value = JSON.parse(localStorage.getItem("darkMode")) === true;
       if (isDarkMode.value) {
@@ -568,7 +641,9 @@ export default {
           revealVotes,
           sessionVotes,
           votingActive,
+          planSizingTechnique,
         }) => {
+          sizingTechnique.value = planSizingTechnique;
           users.value = userList;
           if (username.value === adminUsername) {
             isAdmin.value = true;
@@ -658,6 +733,16 @@ export default {
         adminSubmittedText.value = text;
         toast.success("The story has been updated.");
       });
+
+      socket.on("sizing-technique-changed", ({ technique }) => {
+        sizingTechnique.value = technique;
+        votes.value = [];
+      });
+    });
+
+    watch(sizingTechnique, (newTechnique) => {
+      options.value =
+        newTechnique === "fibonacci" ? fibonacciSizing : tShirtSizing;
     });
 
     watch(route, (newRoute) => {
@@ -685,6 +770,7 @@ export default {
       socket.off("voting-active");
       socket.off("user-kicked");
       socket.off("admin-input");
+      socket.off("sizing-technique-changed");
     });
 
     return {
@@ -733,6 +819,10 @@ export default {
       toggleSessionExpiredModal,
       SessionExpiredModal,
       scrollToTop,
+      isSettingsPanelVisible,
+      toggleSettingsPanel,
+      sizingTechnique,
+      changeSizingTechnique,
     };
   },
 };
@@ -809,6 +899,47 @@ nav {
   margin-bottom: 24px;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.settings-icon {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  cursor: pointer;
+}
+
+.settings-icon svg {
+  width: 24px;
+  height: 24px;
+}
+
+.settings-icon svg path {
+  stroke: #000;
+  stroke-width: 1px;
+}
+
+.settings-panel {
+  position: absolute;
+  top: 44px;
+  right: 16px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  padding: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  border-radius: 4px;
+}
+
+.settings-panel .close-btn {
+  position: absolute;
+  right: 12px;
+}
+
+.settings-panel .close-btn:hover {
+  cursor: pointer;
+  color: #adadad;
+  transition: color 0.3s;
 }
 
 .scroll-to-top {
@@ -1012,6 +1143,14 @@ button:hover {
   margin-right: auto;
 }
 
+.results-common {
+  color: #8bbf9f;
+}
+
+.results-mixed {
+  color: #ec9a29;
+}
+
 .vote-breakdown {
   display: block;
 }
@@ -1209,6 +1348,47 @@ ul {
   display: none;
 }
 
+/* Button Group */
+.button-group {
+  display: inline-flex;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.button-group-label {
+  font-size: 14px;
+  margin-right: 8px;
+}
+
+.button-group .btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 0;
+  background-color: #8bbf9f;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin: 0;
+}
+
+.button-group .btn:not(:last-child) {
+  border-right: 1px solid #ccc;
+}
+
+.button-group .btn:hover {
+  background-color: #6ba98f;
+}
+
+.button-group .btn.active {
+  background-color: #3b5249;
+}
+
+.button-group .btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
 /* Checkmark toggle */
 /* Hide the default checkbox */
 .dark-mode-text {
@@ -1344,6 +1524,16 @@ body.dark-mode .vote svg path {
 
 body.dark-mode .fraction .numerator {
   border-bottom: 3px solid #fff;
+}
+
+body.dark-mode .settings-icon svg path {
+  stroke: #6d6d6d;
+}
+
+body.dark-mode .settings-panel {
+  background-color: #6d6d6d;
+  border-color: #444444;
+  box-shadow: 0 4px 12px rgba(252, 252, 252, 0.1);
 }
 
 @media screen and (max-width: 480px) {
