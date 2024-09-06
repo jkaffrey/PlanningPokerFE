@@ -72,7 +72,19 @@
       :onConfirm="toggleSessionExpiredModal"
     />
     <div class="story">
-      <h3 v-if="sessionId && username">{{ adminSubmittedText }}</h3>
+      <!-- TODO: Adjust here -->
+      <h3 v-if="sessionId && username">
+        <a
+          class="redirect-link"
+          v-if="linkText(adminSubmittedText)"
+          :href="linkText(adminSubmittedText)"
+          target="_blank"
+          >{{ adminSubmittedText }}</a
+        >
+        <span v-else>
+          {{ adminSubmittedText }}
+        </span>
+      </h3>
       <div v-if="isAdmin && sessionId && username" class="add-story">
         <input type="text" v-model="adminInput" placeholder="Enter text" />
         <button @click="submitAdminInput" class="btn-primary">
@@ -327,7 +339,8 @@ export default {
     const searchParams = new URLSearchParams(window.location.search);
     const session_id = searchParams ? searchParams.get("sessionId") : null;
     const tShirtSizing = ["XS", "S", "M", "L", "XL", "XXL", "XXXL"];
-    const fibonacciSizing = ["0", "1/2", "1", "2", "3", "5", "8", "13", "20"];
+    //const fibonacciSizing = ["0", "1/2", "1", "2", "3", "5", "8", "13", "20"];
+    const fibonacciSizing = ["1/2", "1", "2", "3", "5", "8"];
 
     const socket = inject("socket");
     const route = useRoute();
@@ -518,6 +531,15 @@ export default {
       toast.success(
         "Session URL has been copied to your clipboard. Share it with your players!"
       );
+    };
+
+    const linkText = (link) => {
+      try {
+        new URL(link);
+        return link;
+      } catch (_) {
+        return null;
+      }
     };
 
     const currentSessionUrl = computed(() => {
@@ -799,6 +821,7 @@ export default {
       getUserVote,
       currentSessionUrl,
       copySessionUrl,
+      linkText,
       expandInvite,
       inviteExpanded,
       startTheVoting,
@@ -1434,6 +1457,16 @@ input.toggle:checked + .toggle-label:before {
   transform: translateX(26px);
 }
 
+.redirect-link {
+  color: #3b5249; /* Same color as unvisited links */
+  text-decoration: underline; /* Keeps the same text decoration */
+}
+
+.redirect-link:visited {
+  color: #3b5249; /* Same color as unvisited links */
+  text-decoration: underline; /* Keeps the same text decoration */
+}
+
 /* Add a shadow for better visual effect */
 .toggle-label:before {
   box-shadow: 0 0 2px rgba(0, 0, 0, 0.2);
@@ -1534,6 +1567,16 @@ body.dark-mode .settings-panel {
   background-color: #6d6d6d;
   border-color: #444444;
   box-shadow: 0 4px 12px rgba(252, 252, 252, 0.1);
+}
+
+body.dark-mode .redirect-link {
+  color: #8bbf9f;
+  text-decoration: underline;
+}
+
+body.dark-mode .redirect-link:visited {
+  color: #8bbf9f;
+  text-decoration: underline;
 }
 
 @media screen and (max-width: 480px) {
