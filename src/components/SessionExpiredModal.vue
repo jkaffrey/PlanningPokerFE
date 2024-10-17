@@ -2,12 +2,14 @@
   <div v-if="visible" class="modal-overlay">
     <div class="modal-content">
       <slot name="header">
-        <h2>Session expired.</h2>
+        <h2>{{ modalMessage.title || "Session Expired" }}</h2>
       </slot>
       <slot name="body">
         <div>
-          The session you were connected to has expired. If you were the host,
-          please create a new one.
+          {{
+            modalMessage.message ||
+            "The session you were connected to has expired. If you were the host, please create a new one"
+          }}
         </div>
       </slot>
       <div class="modal-buttons">
@@ -26,6 +28,10 @@ export default {
     },
     onConfirm: {
       type: Function,
+      required: true,
+    },
+    modalMessage: {
+      type: Object,
       required: true,
     },
   },

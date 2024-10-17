@@ -21,24 +21,6 @@
     </div>
   </nav>
   <div class="container">
-    <!-- Settings Icon -->
-    <div v-if="isAdmin" class="settings-icon" @click="toggleSettingsPanel">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        width="16"
-        height="16"
-        fill="currentColor"
-        class="bi bi-gear"
-        viewBox="0 0 16 16"
-      >
-        <path
-          d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"
-        />
-        <path
-          d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"
-        />
-      </svg>
-    </div>
     <!-- Settings Panel -->
     <div v-if="isSettingsPanelVisible" class="settings-panel">
       <span class="close-btn" @click="toggleSettingsPanel">x</span>
@@ -70,6 +52,7 @@
     <SessionExpiredModal
       :visible="showSessionExpiredModal"
       :onConfirm="toggleSessionExpiredModal"
+      :modalMessage="sessionExpiredModalData"
     />
     <div class="story">
       <!-- TODO: Adjust here -->
@@ -109,6 +92,24 @@
           />
         </svg>
       </div>
+      <!-- Settings Icon -->
+      <div v-if="isAdmin" class="settings-icon" @click="toggleSettingsPanel">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          fill="currentColor"
+          class="bi bi-gear"
+          viewBox="0 0 16 16"
+        >
+          <path
+            d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"
+          />
+          <path
+            d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"
+          />
+        </svg>
+      </div>
       <div class="admin-actions" v-if="isAdmin">
         <button
           @click="revealVotes"
@@ -139,17 +140,28 @@
         <span v-if="reveal && active">Voting is closed</span>
         <span v-else-if="!reveal && active">
           <div>Voting is in progress...</div>
-          <div class="users-voted">
+          <div v-if="isAdmin" class="users-voted">
             ({{ votes.length }} / {{ users.length }} users have voted.)
           </div>
         </span>
         <span v-else class="waiting-to-start">
-          <div>Waiting for the moderator to start the session.</div>
-          <div class="users-voted">
+          <div v-if="!isAdmin">
+            Waiting for the moderator to start the session.
+          </div>
+          <div v-if="isAdmin">
+            Players are waiting for you to start the session.
+          </div>
+          <!-- <div class="users-voted">
             ({{ users.length }} user{{ users.length > 1 ? "s" : "" }} in the
             session.)
-          </div>
+          </div> -->
         </span>
+        <CountUpTimer
+          v-if="(reveal && active) || (!reveal && active)"
+          :startTimer="active && !reveal"
+          :restartTimer="restartTimer"
+          :resetTimerCallback="restartTheTimer"
+        />
       </div>
     </div>
     <div class="planning-poker">
@@ -205,7 +217,9 @@
                     : 'results-mixed'
                 "
                 >{{
-                  Object.keys(voteCounts).length === 1 ? "Consensus" : "Mixed"
+                  Object.keys(voteCounts).length === 1
+                    ? "Unanimous &#x1F64C;"
+                    : "Mixed"
                 }}</span
               >
             </h3>
@@ -231,46 +245,48 @@
         <div class="players">
           <h3 class="player-header">Players</h3>
           <ul>
-            <li v-for="user in users" :key="user">
-              <div>
-                <button
-                  class="kick-btn"
-                  v-if="user !== username && isAdmin"
-                  @click="kickUser(user)"
-                >
-                  Remove
-                </button>
-                {{ user }}
-                <span v-if="hasVoted(user)" class="vote">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 16 16"
-                    width="16"
-                    height="16"
+            <transition-group name="fade" tag="ul">
+              <li v-for="user in users" :key="user">
+                <div>
+                  <button
+                    class="kick-btn"
+                    v-if="user !== username && isAdmin"
+                    @click="kickUser(user)"
                   >
-                    <circle
-                      cx="8"
-                      cy="8"
-                      r="7"
-                      stroke="#0E0F19"
-                      stroke-width="1"
-                      fill="none"
-                    />
-                    <path
-                      d="M5 8l2 2l4-4"
-                      stroke="#0E0F19"
-                      stroke-width="1"
-                      fill="none"
-                    />
-                  </svg>
-                </span>
-              </div>
-              <div class="votes-and-admin-actions">
-                <span v-if="reveal" class="individual-vote">{{
-                  getUserVote(user)
-                }}</span>
-              </div>
-            </li>
+                    Remove
+                  </button>
+                  {{ user }}
+                  <span v-if="hasVoted(user)" class="vote">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 16 16"
+                      width="16"
+                      height="16"
+                    >
+                      <circle
+                        cx="8"
+                        cy="8"
+                        r="7"
+                        stroke="#0E0F19"
+                        stroke-width="1"
+                        fill="none"
+                      />
+                      <path
+                        d="M5 8l2 2l4-4"
+                        stroke="#0E0F19"
+                        stroke-width="1"
+                        fill="none"
+                      />
+                    </svg>
+                  </span>
+                </div>
+                <div class="votes-and-admin-actions">
+                  <span v-if="reveal" class="individual-vote">{{
+                    getUserVote(user)
+                  }}</span>
+                </div>
+              </li>
+            </transition-group>
             <li @click="expandInvite" class="invite-players">
               <div
                 v-if="inviteExpanded"
@@ -327,12 +343,14 @@ import { useToast } from "vue-toastification";
 import VotePieChart from "./components/VotePieChart.vue";
 import RenameModal from "./components/RenameModal.vue";
 import SessionExpiredModal from "./components/SessionExpiredModal.vue";
+import CountUpTimer from "./components/CountUpTimer.vue";
 
 export default {
   components: {
     VotePieChart,
     RenameModal,
     SessionExpiredModal,
+    CountUpTimer,
   },
   setup() {
     const toast = useToast();
@@ -359,11 +377,17 @@ export default {
     const inviteExpanded = ref(false);
     const showRenameModal = ref(false);
     const showSessionExpiredModal = ref(false);
+    const sessionExpiredModalData = ref({});
     const isDarkMode = ref(false);
     const lastHealthCheck = ref(true);
     const isSettingsPanelVisible = ref(false);
     const sizingTechnique = ref("fibonacci");
     const options = ref([]);
+    const restartTimer = ref(false);
+
+    const restartTheTimer = () => {
+      restartTimer.value = false;
+    };
 
     const isFraction = (value) => {
       return /\d+\/\d+/.test(value);
@@ -403,7 +427,14 @@ export default {
       showRenameModal.value = false;
       username.value = newUsername;
       localStorage.setItem("username", newUsername);
-      toast.success("Your username has been changed.");
+      // toast.success("Your username has been changed.");
+      socket.emit("add-history-event", {
+        sessionId: sessionId.value,
+        historyEvent: {
+          eventType: "user-action",
+          eventMessage: `${oldUsername} changed their name to ${newUsername}`,
+        },
+      });
       socket.emit("username-changed", {
         sessionId: sessionId.value,
         username: newUsername,
@@ -449,9 +480,6 @@ export default {
       socket.emit("create-session", { adminUsername: username.value });
       votes.value = [];
       adminSubmittedText.value = "";
-      toast.success(
-        "A new session has been started, invite your players to begin planning."
-      );
     };
 
     const joinSession = () => {
@@ -483,7 +511,6 @@ export default {
         return;
       }
       socket.emit("vote", option);
-      toast.success("Your vote has been submitted.");
     };
 
     const revealVotes = () => {
@@ -498,11 +525,19 @@ export default {
     const restartVoting = () => {
       socket.emit("restart-voting", sessionId.value);
       active.value = false;
+      // restartTimer.value = true;
     };
 
     const kickUser = (user) => {
       socket.emit("kick-user", { sessionId: sessionId.value, username: user });
-      toast.success("User " + user + " has been kicked from this session.");
+      // toast.success("User " + user + " has been kicked from this session.");
+      socket.emit("add-history-event", {
+        sessionId: sessionId.value,
+        historyEvent: {
+          eventType: "user-action",
+          eventMessage: `${user} has been kicked from the session.`,
+        },
+      });
     };
 
     const changeSizingTechnique = (technique) => {
@@ -515,7 +550,6 @@ export default {
 
     const submitAdminInput = () => {
       if (!adminInput.value) {
-        toast.warning("Looks like you forgot to type in a story.");
         return;
       }
       socket.emit("admin-input", {
@@ -528,9 +562,7 @@ export default {
 
     const copySessionUrl = () => {
       navigator.clipboard.writeText(currentSessionUrl.value);
-      toast.success(
-        "Session URL has been copied to your clipboard. Share it with your players!"
-      );
+      toast.success("Link has been copied.", { timeout: 1000 });
     };
 
     const linkText = (link) => {
@@ -621,6 +653,11 @@ export default {
         if (sessionHealthy) {
         } else {
           showSessionExpiredModal.value = true;
+          sessionExpiredModalData.value = {
+            title: "Session Not Found",
+            message:
+              "This session you are attempting to connect to does not exist.",
+          };
           router.push({ path: "/" });
           router.go();
           // sessionId.value = null;
@@ -644,9 +681,12 @@ export default {
         sessionId.value = "";
         router.push({ path: "/" });
         showSessionExpiredModal.value = true;
+        sessionExpiredModalData.value = msg;
+        console.log(sessionExpiredModalData.value);
       });
 
       socket.on("session-created", (id) => {
+        console.log("New session created, joining it");
         router.push({ path: "/", query: { sessionId: id } });
         sessionId.value = id;
         isAdmin.value = true;
@@ -697,13 +737,28 @@ export default {
               }
             }
           }
+
+          socket.emit("add-history-event", {
+            sessionId: sessionId.value,
+            historyEvent: {
+              eventType: "user-action",
+              eventMessage: `${username.value} joined.`,
+            },
+          });
         }
       );
 
       socket.on("user-left", ({ username, users: userList }) => {
         if (username) {
           users.value = userList;
-          toast.warning(`${username} left`);
+          // toast.warning(`${username} left`);
+          socket.emit("add-history-event", {
+            sessionId: sessionId.value,
+            historyEvent: {
+              eventType: "user-action",
+              eventMessage: `${username} left.`,
+            },
+          });
         }
       });
 
@@ -721,6 +776,7 @@ export default {
       socket.on("voting-reset", () => {
         reveal.value = false;
         active.value = false;
+        restartTimer.value = true;
         votes.value = [];
       });
 
@@ -753,7 +809,6 @@ export default {
 
       socket.on("admin-input", ({ text }) => {
         adminSubmittedText.value = text;
-        toast.success("The story has been updated.");
       });
 
       socket.on("sizing-technique-changed", ({ technique }) => {
@@ -839,6 +894,7 @@ export default {
       lastHealthCheck,
       handleErrors,
       showSessionExpiredModal,
+      sessionExpiredModalData,
       toggleSessionExpiredModal,
       SessionExpiredModal,
       scrollToTop,
@@ -846,6 +902,9 @@ export default {
       toggleSettingsPanel,
       sizingTechnique,
       changeSizingTechnique,
+      CountUpTimer,
+      restartTimer,
+      restartTheTimer,
     };
   },
 };
@@ -926,9 +985,9 @@ nav {
 }
 
 .settings-icon {
-  position: absolute;
+  /* position: absolute;
   top: 16px;
-  right: 16px;
+  right: 16px; */
   cursor: pointer;
 }
 
@@ -1166,6 +1225,10 @@ button:hover {
   margin-right: auto;
 }
 
+.chart-breakdown {
+  width: 200px;
+}
+
 .results-common {
   color: #8bbf9f;
 }
@@ -1311,6 +1374,15 @@ ul {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0; /* Initial state for entering/leaving */
+}
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s ease-in; /* Duration and easing for the transition */
 }
 
 .players li:first-child {
@@ -1560,7 +1632,7 @@ body.dark-mode .fraction .numerator {
 }
 
 body.dark-mode .settings-icon svg path {
-  stroke: #6d6d6d;
+  stroke: #fff;
 }
 
 body.dark-mode .settings-panel {
