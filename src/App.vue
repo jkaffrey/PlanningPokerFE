@@ -479,7 +479,11 @@ export default {
 
     const createSession = (alertUsers) => {
       lastHealthCheck.value = true;
-      socket.emit("create-session", { adminUsername: username.value });
+      const oldSessionId = sessionId.value;
+      socket.emit("create-session", {
+        adminUsername: username.value,
+        oldSessionId: oldSessionId,
+      });
       votes.value = [];
       adminSubmittedText.value = "";
       if (alertUsers) {
@@ -691,7 +695,6 @@ export default {
       });
 
       socket.on("session-created", (id) => {
-        console.log("New session created, joining it");
         router.push({ path: "/", query: { sessionId: id } });
         sessionId.value = id;
         isAdmin.value = true;
