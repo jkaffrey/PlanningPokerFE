@@ -4,7 +4,7 @@
       <a href="/">Planning Poker</a>
     </div>
     <div class="nav-right">
-      <button class="btn-primary" @click="createSession">
+      <button class="btn-primary" @click="createSession(true)">
         Create A New Session
       </button>
       <span class="dark-mode-toggle">
@@ -169,7 +169,9 @@
         <div class="create-join-container">
           <div class="create-session">
             <h2>Create a New Session</h2>
-            <button @click="createSession" class="btn-primary">Create</button>
+            <button @click="createSession(false)" class="btn-primary">
+              Create
+            </button>
           </div>
           <div class="separator">
             <span>OR</span>
@@ -475,11 +477,14 @@ export default {
       return voteValue;
     };
 
-    const createSession = () => {
+    const createSession = (alertUsers) => {
       lastHealthCheck.value = true;
       socket.emit("create-session", { adminUsername: username.value });
       votes.value = [];
       adminSubmittedText.value = "";
+      if (alertUsers) {
+        alert("A new session has been created. Please invite players to join.");
+      }
     };
 
     const joinSession = () => {
