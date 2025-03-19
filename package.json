@@ -10,6 +10,8 @@
     "build": "npx vite build",
     "preview": "vite preview"
   },
+  "author": "Jeremy Kaffrey",
+  "license": "MIT",
   "dependencies": {
     "@vitejs/plugin-vue": "^5.0.5",
     "chart.js": "^4.4.3",
